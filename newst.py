@@ -21,35 +21,8 @@ def load_model(style_name):
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
 
-# 添加自定义 CSS 样式
-def add_custom_css():
-    st.markdown(
-        """
-        <style>
-        body {
-            background: linear-gradient(to right, purple, white);
-            color: white;
-        }
-        .stApp {
-            background: linear-gradient(to right, purple, white);
-        }
-        .stButton button {
-            background-color: purple;
-            color: white;
-        }
-        .stTextInput input {
-            background-color: #f1f1f1;
-        }
-        .stImage {
-            border-radius: 10px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
 # Streamlit 页面 UI
 def main():
-    add_custom_css()  # 应用自定义样式
-
     st.title("快速神经风格迁移")
 
     st.sidebar.header("上传和设置")
