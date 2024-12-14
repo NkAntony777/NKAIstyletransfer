@@ -23,9 +23,9 @@ def load_model(style_name):
 
 # Streamlit 页面 UI
 def main():
-    # 显示南开大学校徽
-    logo_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Nankai_University_Logo.svg/1200px-Nankai_University_Logo.svg.png"  # 南开大学校徽 URL
-    st.markdown(f'<img src="{logo_url}" style="position: absolute; top: 10px; right: 10px; height: 50px;">', unsafe_allow_html=True)
+    # 读取并显示项目目录中的南开大学校徽
+    logo_path = "nankai_logo.jpg"  # 校徽的文件名
+    st.markdown(f'<img src="{logo_path}" style="position: absolute; top: 10px; right: 10px; height: 50px;">', unsafe_allow_html=True)
 
     st.title("快速神经风格迁移")
 
