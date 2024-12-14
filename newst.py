@@ -6,6 +6,7 @@ from utils import style_transform, denormalize, deprocess, extract_frames, save_
 import os
 import cv2
 import tqdm
+import tempfile
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -85,12 +86,14 @@ def main():
                         stylized_frame = transformer(frame_tensor)
                     stylized_frames.append(deprocess(stylized_frame))
 
-                # Save the video
-                output_video_path = f"stylized_{content_video_file.name}"
-                save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
+                # Save the stylized video to a temporary directory
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
+                    output_video_path = tmp_file.name
+                    save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
 
-                st.video(output_video_path)
-                st.success(f"Stylized video saved at {output_video_path}!")
+                    # Display the video in Streamlit
+                    st.video(output_video_path)
+                    st.success(f"Stylized video saved at {output_video_path}!")
 
 if __name__ == "__main__":
     main()
