@@ -1,0 +1,7 @@
+torch
+torchvision
+pillow
+streamlit
+av
+tqdm
+opencv-python-headless
