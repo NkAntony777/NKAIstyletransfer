@@ -23,7 +23,6 @@ def load_model(style_name):
 
 # Streamlit 页面 UI
 def main():
-   
     st.title("快速图像风格迁移 APP")
 
     st.sidebar.header("上传和设置")
@@ -58,7 +57,7 @@ def main():
                 Image.fromarray(stylized_image).save(output_path)
 
                 st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
-                st.info("长按或者右键保存图像")
+                st.info("长按或者右键可以保存")
 
 if __name__ == "__main__":
     main()
