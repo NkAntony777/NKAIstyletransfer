@@ -33,6 +33,11 @@ def main():
     # Upload content image
     content_image_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
+    # Display the original image
+    if content_image_file:
+        content_image = Image.open(content_image_file)
+        st.image(content_image, caption="Original Image", use_column_width=True)
+
     # Apply style transfer to image
     if st.sidebar.button("Apply Style to Image"):
         if content_image_file:
@@ -40,7 +45,6 @@ def main():
                 load_model(style_name)
 
                 # Load and process content image
-                content_image = Image.open(content_image_file)
                 transform = style_transform()
                 content_tensor = transform(content_image).unsqueeze(0).to(device)
 
@@ -51,6 +55,7 @@ def main():
                 # Save and display result
                 output_path = "stylized_output.jpg"
                 Image.fromarray(stylized_image).save(output_path)
+
                 st.image(output_path, caption="Stylized Image", use_column_width=True)
 
 if __name__ == "__main__":
