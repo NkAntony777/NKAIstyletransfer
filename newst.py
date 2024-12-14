@@ -23,6 +23,10 @@ def load_model(style_name):
 
 # Streamlit 页面 UI
 def main():
+    # 显示南开大学校徽
+    logo_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Nankai_University_Logo.svg/1200px-Nankai_University_Logo.svg.png"  # 南开大学校徽 URL
+    st.markdown(f'<img src="{logo_url}" style="position: absolute; top: 10px; right: 10px; height: 50px;">', unsafe_allow_html=True)
+
     st.title("快速神经风格迁移")
 
     st.sidebar.header("上传和设置")
