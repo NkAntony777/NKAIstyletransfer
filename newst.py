@@ -91,9 +91,11 @@ def main():
                     output_video_path = tmp_file.name
                     save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
 
-                    # Display the video in Streamlit
-                    st.video(output_video_path)
+                    # Show "Play Video" button after processing
                     st.success(f"Stylized video saved at {output_video_path}!")
+                    
+                    if st.button("Play the Stylized Video"):
+                        st.video(output_video_path)
 
 if __name__ == "__main__":
     main()
