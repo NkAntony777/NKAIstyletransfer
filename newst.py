@@ -7,6 +7,8 @@ import os
 import cv2
 import tqdm
 import tempfile
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -18,6 +20,20 @@ STYLE_MODELS = {
     "Starry Night": "starry_night_10000.pth",
     "Mosaic": "mosaic_10000.pth",
 }
+
+# AWS S3 setup
+s3_bucket_name = 'your-bucket-name'  # Replace with your bucket name
+s3_client = boto3.client('s3')
+
+def upload_to_s3(local_file_path, s3_file_name):
+    """Upload video to S3 and return the URL"""
+    try:
+        s3_client.upload_file(local_file_path, s3_bucket_name, s3_file_name)
+        s3_url = f"https://{s3_bucket_name}.s3.amazonaws.com/{s3_file_name}"
+        return s3_url
+    except NoCredentialsError:
+        st.error("AWS credentials not found.")
+        return None
 
 def load_model(style_name):
     """Load the selected style model."""
@@ -91,11 +107,15 @@ def main():
                     output_video_path = tmp_file.name
                     save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
 
-                    # Show "Play Video" button after processing
-                    st.success(f"Stylized video saved at {output_video_path}!")
+                    # Upload video to AWS S3
+                    s3_url = upload_to_s3(output_video_path, f"stylized_{content_video_file.name}")
                     
-                    if st.button("Play the Stylized Video"):
-                        st.video(output_video_path)
+                    if s3_url:
+                        # Show "Play Video" button after processing
+                        st.success(f"Stylized video uploaded to {s3_url}!")
+
+                        if st.button("Play the Stylized Video"):
+                            st.video(s3_url)
 
 if __name__ == "__main__":
     main()
