@@ -28,7 +28,7 @@ def main():
 
     st.sidebar.header("上传和设置")
 
-@@ -41,7 +41,7 @@
+
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
         if content_image_file:
@@ -37,7 +37,7 @@ def main():
                 load_model(style_name)
 
                 # 加载并处理内容图像
-@@ -57,6 +57,7 @@
+
                 Image.fromarray(stylized_image).save(output_path)
 
                 st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
