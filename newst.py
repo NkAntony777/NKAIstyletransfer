@@ -3,7 +3,6 @@ from PIL import Image
 import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
-import numpy as np
 
 # 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,10 +25,18 @@ def load_model(style_name):
 def main():
     st.title("快速图像风格迁移 APP")
 
-    # 侧边栏
     st.sidebar.header("上传和设置")
-    style_name = st.sidebar.selectbox("选择风格模型", list(STYLE_MODELS.keys()))
-    content_image_file = st.sidebar.file_uploader("上传内容图片", type=["jpg", "png"])
+
+    # 风格选择
+    style_name = st.sidebar.selectbox("选择风格", list(STYLE_MODELS.keys()))
+
+    # 上传内容图像
+    content_image_file = st.sidebar.file_uploader("上传图片", type=["jpg", "jpeg", "png"])
+
+    # 显示原始图像
+    if content_image_file:
+        content_image = Image.open(content_image_file)
+        st.image(content_image, caption="原始图像", use_container_width=True)
 
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
@@ -38,23 +45,18 @@ def main():
                 load_model(style_name)
 
                 # 加载并处理内容图像
-                content_image = Image.open(content_image_file).convert("RGB")
-                content_tensor = style_transform(content_image).unsqueeze(0).to(device)
+                transform = style_transform()
+                content_tensor = transform(content_image).unsqueeze(0).to(device)
 
-                # 风格迁移
                 with torch.no_grad():
-                    output_tensor = transformer(content_tensor)
-                output_image = denormalize(output_tensor.squeeze())
-                stylized_image = deprocess(output_image)
+                    stylized_tensor = transformer(content_tensor)
+                stylized_image = deprocess(stylized_tensor)
 
-                # 保存和显示结果
-                output_path = "stylized_image.jpg"
+                # 保存并显示结果
+                output_path = "stylized_output.jpg"
                 Image.fromarray(stylized_image).save(output_path)
 
-                st.image(output_path, caption="风格迁移后的图像", use_column_width=True)
-                st.info("长按或者右键可以保存图片")
-        else:
-            st.warning("请先上传内容图片！")
+                st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
 
 if __name__ == "__main__":
     main()
