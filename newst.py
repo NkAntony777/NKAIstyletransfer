@@ -4,6 +4,9 @@ import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
 import os
+import schedule
+import time
+import threading
 
 # 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,6 +19,32 @@ STYLE_MODELS = {
     "Mosaic": "mosaic_10000.pth",
 }
 
+# 清理缓存的功能
+def clear_cache():
+    """清理临时缓存文件"""
+    # 删除风格迁移后的图像
+    output_path = "stylized_output.jpg"
+    if os.path.exists(output_path):
+        os.remove(output_path)
+        print("缓存已清理：", output_path)
+
+    # 你可以在这里添加其他的缓存文件夹或文件路径进行清理
+
+def schedule_cache_cleanup():
+    """定时清理缓存，每小时执行一次"""
+    schedule.every(1).hours.do(clear_cache)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# 启动定时清理线程
+def start_cleanup_thread():
+    cleanup_thread = threading.Thread(target=schedule_cache_cleanup)
+    cleanup_thread.daemon = True  # 设置为守护线程
+    cleanup_thread.start()
+
+# 加载模型并设置设备
 def load_model(style_name):
     """加载所选的风格模型。"""
     if style_name not in STYLE_MODELS:
@@ -34,6 +63,9 @@ def load_model(style_name):
 
 # Streamlit 页面 UI
 def main():
+    # 启动定时清理缓存的线程
+    start_cleanup_thread()
+
     st.title("快速图像风格迁移 APP")
 
     st.sidebar.header("上传和设置")
