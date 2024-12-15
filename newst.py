@@ -3,12 +3,13 @@ from PIL import Image
 import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
+import os
 
 # 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 transformer = TransformerNet().to(device)
 
-# 预定义的风格模型
+# 预定义的风格模型，确保文件路径正确
 STYLE_MODELS = {
     "Cuphead": "cuphead_10000.pth",
     "Starry Night": "starry_night_10000.pth",
@@ -17,8 +18,18 @@ STYLE_MODELS = {
 
 def load_model(style_name):
     """加载所选的风格模型。"""
+    if style_name not in STYLE_MODELS:
+        st.error(f"风格模型 {style_name} 未找到！")
+        return
     model_path = STYLE_MODELS[style_name]
-    transformer.load_state_dict(torch.load(model_path, map_location=device))
+    
+    # 确保模型路径存在
+    if not os.path.exists(model_path):
+        st.error(f"模型文件 {model_path} 未找到，请检查路径。")
+        return
+    
+    # 加载模型
+    transformer.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     transformer.eval()
 
 # Streamlit 页面 UI
