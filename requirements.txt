@@ -6,3 +6,4 @@ av
 tqdm
 opencv-python-headless
 boto3
+schedule
