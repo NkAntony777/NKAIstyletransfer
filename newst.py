@@ -6,6 +6,8 @@ from utils import style_transform, denormalize, deprocess
 import os
 import threading
 import gc
+import time
+
 
 # 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
