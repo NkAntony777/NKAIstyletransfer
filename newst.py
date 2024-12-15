@@ -3,12 +3,13 @@ from PIL import Image
 import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
+import numpy as np
 
-# Load model and set device
+# 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 transformer = TransformerNet().to(device)
 
-# Predefined style models
+# 预定义的风格模型
 STYLE_MODELS = {
     "Cuphead": "cuphead_10000.pth",
     "Starry Night": "starry_night_10000.pth",
@@ -16,42 +17,44 @@ STYLE_MODELS = {
 }
 
 def load_model(style_name):
-    """Load the selected style model."""
+    """加载所选的风格模型。"""
     model_path = STYLE_MODELS[style_name]
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
 
-# Streamlit UI
+# Streamlit 页面 UI
 def main():
-    st.title("Fast Neural Style Transfer")
+    st.title("快速图像风格迁移 APP")
 
-    st.sidebar.header("Upload and Settings")
+    # 侧边栏
+    st.sidebar.header("上传和设置")
+    style_name = st.sidebar.selectbox("选择风格模型", list(STYLE_MODELS.keys()))
+    content_image_file = st.sidebar.file_uploader("上传内容图片", type=["jpg", "png"])
 
-    # Style selection
-    style_name = st.sidebar.selectbox("Select a Style", list(STYLE_MODELS.keys()))
-
-    # Upload content image
-    content_image_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-
-    # Apply style transfer to image
-    if st.sidebar.button("Apply Style to Image"):
+    # 点击按钮进行风格迁移
+    if st.sidebar.button("应用风格到图片"):
         if content_image_file:
-            with st.spinner("Processing Image..."):
+            with st.spinner("正在处理图像..."):
                 load_model(style_name)
 
-                # Load and process content image
-                content_image = Image.open(content_image_file)
-                transform = style_transform()
-                content_tensor = transform(content_image).unsqueeze(0).to(device)
+                # 加载并处理内容图像
+                content_image = Image.open(content_image_file).convert("RGB")
+                content_tensor = style_transform(content_image).unsqueeze(0).to(device)
 
+                # 风格迁移
                 with torch.no_grad():
-                    stylized_tensor = transformer(content_tensor)
-                stylized_image = deprocess(stylized_tensor)
+                    output_tensor = transformer(content_tensor)
+                output_image = denormalize(output_tensor.squeeze())
+                stylized_image = deprocess(output_image)
 
-                # Save and display result
-                output_path = "stylized_output.jpg"
+                # 保存和显示结果
+                output_path = "stylized_image.jpg"
                 Image.fromarray(stylized_image).save(output_path)
-                st.image(output_path, caption="Stylized Image", use_column_width=True)
+
+                st.image(output_path, caption="风格迁移后的图像", use_column_width=True)
+                st.info("长按或者右键可以保存图片")
+        else:
+            st.warning("请先上传内容图片！")
 
 if __name__ == "__main__":
     main()
