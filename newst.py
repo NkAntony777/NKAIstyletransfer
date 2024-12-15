@@ -18,7 +18,7 @@ def load_model_once(style_name):
     """加载所选的风格模型，仅加载一次。"""
     model_path = STYLE_MODELS[style_name]
     model = TransformerNet().to(device)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device，weights_only=True))
     model.eval()
     return model
 
