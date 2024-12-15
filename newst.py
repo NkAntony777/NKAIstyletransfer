@@ -4,11 +4,11 @@ import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
 
-# 加载模型并设置设备
+# Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 transformer = TransformerNet().to(device)
 
-# 预定义的风格模型
+# Predefined style models
 STYLE_MODELS = {
     "Cuphead": "cuphead_10000.pth",
     "Starry Night": "starry_night_10000.pth",
@@ -16,35 +16,31 @@ STYLE_MODELS = {
 }
 
 def load_model(style_name):
-    """加载所选的风格模型。"""
+    """Load the selected style model."""
     model_path = STYLE_MODELS[style_name]
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
 
-# Streamlit 页面 UI
+# Streamlit UI
 def main():
-    st.title("快速神经风格迁移")
+    st.title("Fast Neural Style Transfer")
 
-    st.sidebar.header("上传和设置")
+    st.sidebar.header("Upload and Settings")
 
-    # 风格选择
-    style_name = st.sidebar.selectbox("选择风格", list(STYLE_MODELS.keys()))
+    # Style selection
+    style_name = st.sidebar.selectbox("Select a Style", list(STYLE_MODELS.keys()))
 
-    # 上传内容图像
-    content_image_file = st.sidebar.file_uploader("上传图片", type=["jpg", "jpeg", "png"])
+    # Upload content image
+    content_image_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
-    # 显示原始图像
-    if content_image_file:
-        content_image = Image.open(content_image_file)
-        st.image(content_image, caption="原始图像", use_container_width=True)
-
-    # 点击按钮进行风格迁移
-    if st.sidebar.button("应用风格到图片"):
+    # Apply style transfer to image
+    if st.sidebar.button("Apply Style to Image"):
         if content_image_file:
-            with st.spinner("正在飞速运转..."):
+            with st.spinner("Processing Image..."):
                 load_model(style_name)
 
-                # 加载并处理内容图像
+                # Load and process content image
+                content_image = Image.open(content_image_file)
                 transform = style_transform()
                 content_tensor = transform(content_image).unsqueeze(0).to(device)
 
@@ -52,12 +48,10 @@ def main():
                     stylized_tensor = transformer(content_tensor)
                 stylized_image = deprocess(stylized_tensor)
 
-                # 保存并显示结果
+                # Save and display result
                 output_path = "stylized_output.jpg"
                 Image.fromarray(stylized_image).save(output_path)
-
-                st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
-                st.info("长按或者右键可以保存")
+                st.image(output_path, caption="Stylized Image", use_column_width=True)
 
 if __name__ == "__main__":
     main()
