@@ -9,7 +9,7 @@ import time
 import threading
 
 # 加载模型并设置设备
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 transformer = TransformerNet().to(device)
 
 # 预定义的风格模型，确保文件路径正确
