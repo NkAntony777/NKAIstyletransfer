@@ -40,7 +40,20 @@ def main():
     if content_image_file:
         content_image = Image.open(content_image_file)
         st.image(content_image, caption="原始图像", use_container_width=True)
+    # 上传内容图像，并检查文件大小
 
+
+    if content_image_file:
+        # 获取上传文件的大小，单位为字节
+        file_size = content_image_file.size
+
+        # 如果文件大小超过1MB，提示用户并要求上传小于1MB的图片
+        if file_size > 1 * 1024 * 1024:  # 1MB = 1 * 1024 * 1024 bytes
+            st.sidebar.warning("文件过大，请上传小于1MB的图片，或者选取微信对话中的非原图。")
+        else:
+            # 如果文件大小合适，则继续处理图片
+            content_image = Image.open(content_image_file)
+            st.image(content_image, caption="原始图像", use_container_width=True)
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
         if content_image_file:
