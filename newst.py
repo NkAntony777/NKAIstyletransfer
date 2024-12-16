@@ -50,7 +50,7 @@ def main():
 
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
-        if content_image_file and file_size <= 1 * 1024 * 1024:  # 确保图片文件大小小于1MB
+        if content_image_file and file_size <= 1.5 * 1024 * 1024:  # 确保图片文件大小小于1MB
             with st.spinner("正在处理图像..."):
                 load_model(style_name)
 
