@@ -3,6 +3,7 @@ from PIL import Image
 import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
+import io
 import os
 
 # 设置设备
@@ -22,21 +23,21 @@ def load_model(style_name):
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
 
-@st.cache_data
 def compress_image(image, max_size_kb):
     """将图像压缩到指定大小以下。"""
-    buffer = image.copy()
-    width, height = buffer.size
-    while True:
-        buffer.thumbnail((width, height), Image.ANTIALIAS)
-        with st.spinner("正在压缩图片..."):
-            buffer_bytes = buffer.tobytes()
-        if len(buffer_bytes) <= max_size_kb * 1024:
-            return buffer
-        width = int(width * 0.9)
-        height = int(height * 0.9)
+    with io.BytesIO() as buffer:
+        image.save(buffer, format="JPEG", quality=85)
+        buffer_size_kb = len(buffer.getvalue()) / 1024
 
-@st.cache_data
+        while buffer_size_kb > max_size_kb:
+            image = image.resize((int(image.width * 0.9), int(image.height * 0.9)))
+            buffer = io.BytesIO()
+            image.save(buffer, format="JPEG", quality=85)
+            buffer_size_kb = len(buffer.getvalue()) / 1024
+
+        buffer.seek(0)
+        return Image.open(buffer)
+
 def process_image(style_name, content_image):
     """对内容图像进行风格迁移。"""
     load_model(style_name)
@@ -59,7 +60,8 @@ def main():
     # 上传内容图像
     content_images = st.sidebar.file_uploader("上传图片 (可多选)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-    # 检查上传的图片
+    processed_images = []
+
     if content_images:
         for content_image_file in content_images:
             file_size_kb = content_image_file.size / 1024  # 转换为 KB
@@ -70,16 +72,16 @@ def main():
                 content_image = compress_image(content_image, max_size_kb=1024)
 
             st.image(content_image, caption=f"{content_image_file.name} (已处理)", use_container_width=True)
+            processed_images.append((content_image_file.name, content_image))
 
         # 点击按钮进行风格迁移
         if st.sidebar.button("应用风格到所有图片"):
             results = []
             with st.spinner("正在处理所有图像..."):
-                for content_image_file in content_images:
-                    content_image = Image.open(content_image_file)
+                for name, content_image in processed_images:
                     stylized_image = process_image(style_name, content_image)
 
-                    output_path = f"stylized_{os.path.splitext(content_image_file.name)[0]}.jpg"
+                    output_path = f"stylized_{os.path.splitext(name)[0]}.jpg"
                     Image.fromarray(stylized_image).save(output_path)
                     results.append((output_path, stylized_image))
 
