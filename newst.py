@@ -42,7 +42,7 @@ def main():
 
         # 如果文件大小超过1MB，提示用户并要求上传小于1MB的图片
         if file_size > 1.5 * 1024 * 1024:  # 1MB = 1 * 1024 * 1024 bytes
-            st.sidebar.warning("文件过大，请上传小于1MB的图片，或者选取下载到本地的微信对话中的非原图。")
+            st.sidebar.warning("文件过大，请上传小于1.5MB的图片，或者选取下载到本地的微信对话中的非原图。")
         else:
             # 如果文件大小合适，则继续处理图片
             content_image = Image.open(content_image_file)
