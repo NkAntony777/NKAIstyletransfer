@@ -4,7 +4,6 @@ import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
 import io
-import os
 
 # 设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,8 +42,12 @@ def process_image(style_name, content_image):
     load_model(style_name)
     transform = style_transform()
     content_tensor = transform(content_image).unsqueeze(0).to(device)
+
+    # 分步处理逻辑，降低计算资源使用
     with torch.no_grad():
         stylized_tensor = transformer(content_tensor)
+        stylized_tensor = stylized_tensor.cpu()  # 将结果转回 CPU
+
     return deprocess(stylized_tensor)
 
 # Streamlit 页面 UI
@@ -57,37 +60,26 @@ def main():
     # 风格选择
     style_name = st.sidebar.selectbox("选择风格", list(STYLE_MODELS.keys()))
 
-    # 上传内容图像
-    content_images = st.sidebar.file_uploader("上传图片 (可多选)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    # 上传单张内容图像
+    content_image_file = st.sidebar.file_uploader("上传图片", type=["jpg", "jpeg", "png"])
 
-    processed_images = []
+    if content_image_file:
+        file_size_kb = content_image_file.size / 1024  # 转换为 KB
+        content_image = Image.open(content_image_file)
 
-    if content_images:
-        for content_image_file in content_images:
-            file_size_kb = content_image_file.size / 1024  # 转换为 KB
-            content_image = Image.open(content_image_file)
+        if file_size_kb > 1024:  # 超过 1MB
+            st.sidebar.warning("文件过大，正在压缩...")
+            content_image = compress_image(content_image, max_size_kb=1024)
 
-            if file_size_kb > 1024:  # 超过 1MB
-                st.sidebar.warning(f"{content_image_file.name} 文件过大，正在压缩...")
-                content_image = compress_image(content_image, max_size_kb=1024)
-
-            st.image(content_image, caption=f"{content_image_file.name} (已处理)", use_container_width=True)
-            processed_images.append((content_image_file.name, content_image))
+        st.image(content_image, caption="上传的图像", use_container_width=True)
 
         # 点击按钮进行风格迁移
-        if st.sidebar.button("应用风格到所有图片"):
-            results = []
-            with st.spinner("正在处理所有图像..."):
-                for name, content_image in processed_images:
-                    stylized_image = process_image(style_name, content_image)
+        if st.sidebar.button("应用风格"):
+            with st.spinner("正在处理图像..."):
+                stylized_image = process_image(style_name, content_image)
 
-                    output_path = f"stylized_{os.path.splitext(name)[0]}.jpg"
-                    Image.fromarray(stylized_image).save(output_path)
-                    results.append((output_path, stylized_image))
-
-            # 显示处理结果
-            for path, img in results:
-                st.image(img, caption=f"风格迁移结果 - {path}", use_container_width=True)
+                # 显示处理结果
+                st.image(stylized_image, caption="风格迁移结果", use_container_width=True)
 
     st.sidebar.markdown(
         """<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>
