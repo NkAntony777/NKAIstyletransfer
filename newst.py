@@ -4,6 +4,8 @@ import torch
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
 import time
+import hashlib
+import io
 
 # 加载模型并设置设备
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,11 +24,19 @@ def load_model(style_name):
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
 
+# 将图像转换为字节流并计算其哈希值，用于缓存
+def image_to_hash(image):
+    """将图片转换为字节流并计算哈希值，确保哈希值是可缓存的"""
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return hashlib.md5(buffered.getvalue()).hexdigest()
+
 # 使用缓存来避免重复计算，设置 TTL 1小时
 @st.cache_data(ttl=3600)  # 缓存1小时
-def process_stylized_image(content_image, style_name):
+def process_stylized_image(content_image_hash, style_name):
     """处理风格迁移，返回处理后的图片"""
     # 加载并处理内容图像
+    content_image = Image.open(io.BytesIO(bytes.fromhex(content_image_hash)))  # 从哈希恢复图像
     transform = style_transform()
     content_tensor = transform(content_image).unsqueeze(0).to(device)
 
@@ -53,22 +63,24 @@ def main():
         # 获取上传文件的大小，单位为字节
         file_size = content_image_file.size
 
-        # 如果文件大小超过1.5MB，提示用户并要求上传小于1MB的图片
-        if file_size > 3 * 1024 * 1024:  # 1MB = 1 * 1024 * 1024 bytes
-            st.sidebar.warning("文件过大，请上传小于3MB的图片，或者选取下载到本地的微信对话中的非原图。")
+        # 如果文件大小超过3MB，提示用户并要求上传小于3MB的图片
+        if file_size > 3 * 1024 * 1024:  # 3MB = 3 * 1024 * 1024 bytes
+            st.sidebar.warning("文件过大，请上传小于3MB的图片。")
         else:
             # 如果文件大小合适，则继续处理图片
             content_image = Image.open(content_image_file)
             st.image(content_image, caption="原始图像", use_container_width=True)
+            # 计算图片的哈希值
+            content_image_hash = image_to_hash(content_image)
 
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
-        if content_image_file and file_size <= 3 * 1024 * 1024:  # 确保图片文件大小小于1.5MB
+        if content_image_file and file_size <= 3 * 1024 * 1024:  # 确保图片文件大小小于3MB
             with st.spinner("正在处理图像..."):
                 load_model(style_name)
                 
                 # 使用缓存处理图像
-                stylized_image = process_stylized_image(content_image, style_name)
+                stylized_image = process_stylized_image(content_image_hash, style_name)
 
                 # 保存并显示结果
                 output_path = "stylized_output.jpg"
