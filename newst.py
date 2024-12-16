@@ -28,20 +28,13 @@ def main():
     # 侧边栏内容
     st.sidebar.header("上传和设置")
 
-    
+
 
     # 风格选择
     style_name = st.sidebar.selectbox("选择风格", list(STYLE_MODELS.keys()))
 
-    # 上传内容图像
-    content_image_file = st.sidebar.file_uploader("上传图片", type=["jpg", "jpeg", "png"])
-
-    # 显示原始图像
-    if content_image_file:
-        content_image = Image.open(content_image_file)
-        st.image(content_image, caption="原始图像", use_container_width=True)
     # 上传内容图像，并检查文件大小
-
+    content_image_file = st.sidebar.file_uploader("上传图片", type=["jpg", "jpeg", "png"])
 
     if content_image_file:
         # 获取上传文件的大小，单位为字节
@@ -54,9 +47,10 @@ def main():
             # 如果文件大小合适，则继续处理图片
             content_image = Image.open(content_image_file)
             st.image(content_image, caption="原始图像", use_container_width=True)
+
     # 点击按钮进行风格迁移
     if st.sidebar.button("应用风格到图片"):
-        if content_image_file:
+        if content_image_file and file_size <= 1 * 1024 * 1024:  # 确保图片文件大小小于1MB
             with st.spinner("正在处理图像..."):
                 load_model(style_name)
 
@@ -73,7 +67,7 @@ def main():
                 Image.fromarray(stylized_image).save(output_path)
 
                 st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
-                
+
     with st.sidebar.container():
         st.markdown(
             """<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>
@@ -86,6 +80,6 @@ def main():
             </div>""",
             unsafe_allow_html=True,
         )
-
+        
 if __name__ == "__main__":
     main()
