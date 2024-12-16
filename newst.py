@@ -28,18 +28,7 @@ def main():
     # 侧边栏内容
     st.sidebar.header("上传和设置")
 
-    with st.sidebar.container():
-        st.markdown(
-            """<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>
-            <b>小组成员：</b><br>
-            薛世彤<br>
-            陈鹏<br>
-            卢厚任<br>
-            宋达铠<br>
-            张宁
-            </div>""",
-            unsafe_allow_html=True,
-        )
+    
 
     # 风格选择
     style_name = st.sidebar.selectbox("选择风格", list(STYLE_MODELS.keys()))
@@ -71,6 +60,19 @@ def main():
                 Image.fromarray(stylized_image).save(output_path)
 
                 st.image(output_path, caption="风格迁移后的图像", use_container_width=True)
+                
+    with st.sidebar.container():
+        st.markdown(
+            """<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>
+            <b>小组成员：</b><br>
+            薛世彤<br>
+            陈鹏<br>
+            卢厚任<br>
+            宋达铠<br>
+            张宁
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
 if __name__ == "__main__":
     main()
